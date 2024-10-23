@@ -16,8 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 public class Main {
@@ -104,6 +107,15 @@ public class Main {
 
         //fazendo downloads de arquivos
 
+
+        String nomeArquivo = "objetos-furtados.xlsx";
+        String nomeArquivoPopulacao = "populacao-es.xlsx";
+
+        Path caminho = Path.of(nomeArquivo);
+        Path caminhoPopulacao = Path.of(nomeArquivoPopulacao);
+
+        // Verifica se os arquivos locais já existem
+
         try {
 
             Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Listando e fazendo download dos arquivos no bucket: " + nomeBucket);
@@ -164,11 +176,7 @@ public class Main {
 
 
 
-        String nomeArquivo = "objetos-furtados.xlsx";
-        String nomeArquivoPopulacao = "populacao-es.xlsx";
 
-        Path caminho = Path.of(nomeArquivo);
-        Path caminhoPopulacao = Path.of(nomeArquivoPopulacao);
 
             InputStream arquivo = Files.newInputStream(caminho);
             InputStream arquivoPopulacao = Files.newInputStream(caminhoPopulacao);
@@ -186,27 +194,27 @@ public class Main {
             DBConnectionProvider dbConnectionProvider = new DBConnectionProvider();
             JdbcTemplate connection = dbConnectionProvider.getConnection();
 
-            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
-            connection.execute("CREATE DATABASE projetoHorizon");
-            connection.execute("USE projetoHorizon");
-
-            connection.execute("""
-                CREATE TABLE IF NOT EXISTS dados (
-                    idDados INT AUTO_INCREMENT PRIMARY KEY,
-                    dataFurto DATE NOT NULL,
-                    horario TIME NOT NULL,
-                    tipoObjeto VARCHAR(255) NOT NULL,
-                    municipio VARCHAR(255) NOT NULL
-                )
-            """);
-
-            connection.execute("""
-                CREATE TABLE IF NOT EXISTS populacao (
-                    idMunicipio INT AUTO_INCREMENT PRIMARY KEY,
-                    municipio VARCHAR(255) NOT NULL,
-                    populacao INT NOT NULL
-                )
-            """);
+//            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
+//            connection.execute("CREATE DATABASE projetoHorizon");
+//            connection.execute("USE projetoHorizon");
+//
+//            connection.execute("""
+//                CREATE TABLE IF NOT EXISTS dados (
+//                    idDados INT AUTO_INCREMENT PRIMARY KEY,
+//                    dataFurto DATE NOT NULL,
+//                    horario TIME NOT NULL,
+//                    tipoObjeto VARCHAR(255) NOT NULL,
+//                    municipio VARCHAR(255) NOT NULL
+//                )
+//            """);
+//
+//            connection.execute("""
+//                CREATE TABLE IF NOT EXISTS populacao (
+//                    idMunicipio INT AUTO_INCREMENT PRIMARY KEY,
+//                    municipio VARCHAR(255) NOT NULL,
+//                    populacao INT NOT NULL
+//                )
+//            """);
 
 
 
@@ -228,8 +236,8 @@ public class Main {
                         dados.getHorario(),
                         dados.getObjeto(),
                         dados.getMunicipio());
-                connection.update("INSERT INTO dados (dataFurto, horario, tipoObjeto, municipio) VALUES (?, ?, ?, ?)",
-                "2024-04-06", "00:00", "CELULAR", "VITORIA");
+//                connection.update("INSERT INTO dados (dataFurto, horario, tipoObjeto, municipio) VALUES (?, ?, ?, ?)",
+//                "2024-04-06", "00:00", "CELULAR", "VITORIA");
                 //System.out.println(dados);
             }
 
