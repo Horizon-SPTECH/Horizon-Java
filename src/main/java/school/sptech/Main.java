@@ -226,28 +226,28 @@ public class Main {
             DBConnectionProvider dbConnectionProvider = new DBConnectionProvider();
             JdbcTemplate connection = dbConnectionProvider.getConnection();
 
-            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
-            connection.execute("CREATE DATABASE projetoHorizon");
-            connection.execute("USE projetoHorizon");
-
-        connection.execute("""
-                CREATE TABLE IF NOT EXISTS populacao (
-                    idMunicipio INT AUTO_INCREMENT PRIMARY KEY,
-                    municipio VARCHAR(255) NOT NULL,
-                    populacao INT NOT NULL
-                )
-            """);
-
-            connection.execute("""
-                CREATE TABLE IF NOT EXISTS furtos (
-                    idDados INT AUTO_INCREMENT PRIMARY KEY,
-                    dataFurto DATE NOT NULL,
-                    horario TIME NOT NULL,
-                    tipoObjeto VARCHAR(255) NOT NULL,
-                    idMunicipio INT,
-                    CONSTRAINT fkPopulacao FOREIGN KEY (idMunicipio) REFERENCES populacao(idMunicipio)
-                )
-            """);
+//            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
+//            connection.execute("CREATE DATABASE projetoHorizon");
+//            connection.execute("USE projetoHorizon");
+//
+//        connection.execute("""
+//                CREATE TABLE IF NOT EXISTS populacao (
+//                    idMunicipio INT AUTO_INCREMENT PRIMARY KEY,
+//                    municipio VARCHAR(255) NOT NULL,
+//                    populacao INT NOT NULL
+//                )
+//            """);
+//
+//            connection.execute("""
+//                CREATE TABLE IF NOT EXISTS furtos (
+//                    idDados INT AUTO_INCREMENT PRIMARY KEY,
+//                    dataFurto DATE NOT NULL,
+//                    horario TIME NOT NULL,
+//                    tipoObjeto VARCHAR(255) NOT NULL,
+//                    idMunicipio INT,
+//                    CONSTRAINT fkPopulacao FOREIGN KEY (idMunicipio) REFERENCES populacao(idMunicipio)
+//                )
+//            """);
 
 
 
