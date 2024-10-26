@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Date;
 
 
-
 public class LeitorExcel {
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -46,9 +45,17 @@ public class LeitorExcel {
 
             Integer idCont = 1;
 
+
             Integer contadorLinha = 0;
             Integer linhasNaoInseridas = 0;
             Integer linhasInseridas = 0;
+
+            Integer contadorErroData = 0;
+            Integer contadorErroHorario = 0;
+            Integer contadorErroNomeObjeto = 0;
+            Integer contadorErroNomeMunicipio = 0;
+
+
             for (Row row : sheet) {
                 contadorLinha++;
                 if (row.getRowNum() == 0){
@@ -65,9 +72,7 @@ public class LeitorExcel {
                 Dados dados = new Dados();
 
 
-
-
-                //validadno se o tipo de crime é Furto
+                //validando se o tipo de crime é Furto
                 if(row.getCell(4).getStringCellValue().equals("FURTADO")){
 
                     Boolean verificarLinha = true;
@@ -78,8 +83,7 @@ public class LeitorExcel {
                     if (row.getCell(1).getCellType() == CellType.NUMERIC){
                         dados.setData(row.getCell(1).getLocalDateTimeCellValue().toLocalDate());
                     }else {
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "]Valor inválido na coluna de Data.");
-                        Log.inserirNoLog("Na linha: " + contadorLinha);
+                        contadorErroData++;
                         verificarLinha = false;
                     }
 
@@ -87,12 +91,9 @@ public class LeitorExcel {
                     if (row.getCell(2).getCellType() == CellType.NUMERIC) {
                         dados.setHorario(row.getCell(2).getLocalDateTimeCellValue().toLocalTime());
                     } else {
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Valor inválido na coluna de Horários");
-                        Log.inserirNoLog("Na linha: " + contadorLinha);
+                        contadorErroHorario++;
                         verificarLinha = false;
                     }
-
-
 
                     if(row.getCell(3).getCellType() == CellType.STRING){
                         if (row.getCell(3).getStringCellValue().equals("VEICULO") ||
@@ -105,12 +106,11 @@ public class LeitorExcel {
                                 dados.setObjeto(row.getCell(3).getStringCellValue());
                             }
                         }else {
-                            //System.out.println("Valor de objeto não é aceito: " + row.getCell(3).getStringCellValue());
                             verificarLinha = false;
+                            contadorErroNomeObjeto++;
                         }
                     }else {
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Valor numérico não é aceito");
-                        Log.inserirNoLog("Na linha: " + contadorLinha);
+                        contadorErroNomeObjeto++;
                         verificarLinha = false;
                     }
 
@@ -222,16 +222,15 @@ public class LeitorExcel {
                             case "VITORIA":
                                 textoCorrigido = "VITÓRIA";
                                 break;
-                            default:
+                                default:
                                 break;
                         }
 
 
                         dados.setMunicipio(textoCorrigido);
                     }else {
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Valor numérico não é aceito");
-                        Log.inserirNoLog("Na linha: " + contadorLinha);
                         verificarLinha = false;
+                        contadorErroNomeMunicipio++;
                     }
 
                     if (verificarLinha){
@@ -243,8 +242,6 @@ public class LeitorExcel {
 
 
                 }else {
-                    Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dado não inserido, pois não é Furto");
-                    Log.inserirNoLog("Na linha: " + contadorLinha);
                     linhasNaoInseridas++;
                 }
 
@@ -253,24 +250,43 @@ public class LeitorExcel {
             Log.inserirNoLog("---------------------------------------");
 
             if (linhasNaoInseridas <=1){
-                System.out.println(linhasNaoInseridas +" Linha não foi inserida");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linha(s) não foi inseridas na Tabela de Dados");
+                System.out.println(linhasNaoInseridas +" Linha não foi inserida por ser do tipo roubo");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linha não foi inseridas por ser do tipo roubo ");
 
             }else {
-                System.out.println(linhasNaoInseridas +" Linhas não foram inseridas");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linhas não foram inseridas na Tabela de Dados");
+                System.out.println(linhasNaoInseridas +" Linhas não foram inseridas por ser do tipo roubo");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linhas não foram inseridas por ser do tipo roubo");
 
             }
 
+            if (contadorErroData > 0){
+                System.out.println( contadorErroData +" Linhas não foram inseridas por data indeterminada!");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ contadorErroData +" Linhas não foram inseridas por data indeterminada!");
+            }
+
+            if (contadorErroHorario > 0){
+                System.out.println( contadorErroHorario +" Linhas não foram inseridas por Horário indeterminada! ");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ contadorErroHorario +" Linhas não foram inseridas por Horário indeterminada!");
+            }
+
+            if (contadorErroNomeObjeto > 0) {
+                System.out.println( contadorErroNomeObjeto +" Linhas não foram inseridas por Objeto não registrado");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ contadorErroNomeObjeto +" Linhas não foram inseridas por Objeto não registrado");
+            }
+
+            if (contadorErroNomeMunicipio > 0){
+                System.out.println( contadorErroNomeMunicipio +" Linhas não foram  inseridas por Município não identificada");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ contadorErroNomeMunicipio +" Linhas não foram  inseridas por Município não identificada");
+            }
+
+
             if (linhasInseridas <= 1 ){
-                System.out.println( linhasInseridas +" Linha foi ser inserida");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasInseridas +" Linha foi ser inserida na Tabela de Dados");
+                System.out.println( linhasInseridas +" Linha foi ser inserida na Tabela de Furtos");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasInseridas +" Linha foi ser inserida na Tabela de Furtos");
 
             }else {
-
-                System.out.println( linhasInseridas +" Linhas vão ser inseridas");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasInseridas +" Linha(s) vão ser inseridas na Tabela de Dados");
-
+                System.out.println( linhasInseridas +" Linhas vão ser inseridas na Tabela de Furtos");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasInseridas +" Linha(s) vão ser inseridas na Tabela de Furtos");
             }
 
 
@@ -296,6 +312,9 @@ public class LeitorExcel {
 
     public List<Populacao> extrairDadosPopulacao(String nomeArquivoPopulacao,InputStream arquivoPopulacao){
         Integer contagem = 0;
+        Integer contadorErroMunicipio = 0;
+        Integer contadorErroTotalPopulacao = 0;
+
         try {
             System.out.printf("""
                     Iniciando leitura do arquivo %s
@@ -341,10 +360,8 @@ public class LeitorExcel {
 
                         populacao.setMunicipio(maiusculo);
                     }else {
-                        System.out.println("Valor inválido na coluna de Municípios");
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter) + "] Valor inválido na coluna de Municípios");
-                        Log.inserirNoLog("Na linha: " + contagem);
                         verificarLinha = false;
+                        contadorErroMunicipio++;
                     }
 
                     if (row.getCell(3).getCellType() == CellType.NUMERIC){
@@ -362,14 +379,11 @@ public class LeitorExcel {
                             populacao.setPopulacao(populacaoNumerica);
 
                         } catch (NumberFormatException e) {
-                            System.out.println("Valor inválido na coluna de número de habitantes: " + valorCelula);
-                            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter) + "] Valor inválido na coluna de número de habitantes");
-                            Log.inserirNoLog("Na linha: " + contagem);
                             verificarLinha = false;
+                            contadorErroTotalPopulacao++;
                         }
                     }
                 }
-
                     if (verificarLinha){
                         extrairDadosPopulacao.add(populacao);
                         linhasInseridasMunicipios++;
@@ -386,6 +400,19 @@ public class LeitorExcel {
                 System.out.println( linhasMunicipiosNaoInseridas +" Linhas não foram inseridas");
                 Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter) + "] " + linhasMunicipiosNaoInseridas +" Linhas não foram inseridas na Tabela do Municipio de Espírito Santo");
             }
+
+
+            if (contadorErroMunicipio > 0){
+                System.out.println( contadorErroMunicipio +" Linhas não foram inseridas por Município ser indeterminada!");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter) + "] " + contadorErroMunicipio +" Linhas não foram inseridas por Município ser indeterminada!");
+            }
+
+            if (contadorErroTotalPopulacao > 0) {
+                System.out.println(contadorErroTotalPopulacao + " Linhas não foram inseridas por Número de população ser texto!");
+                Log.inserirNoLog("[" + LocalDateTime.now().format(formatter) + "] " + contadorErroMunicipio + " Linhas não foram inseridas por Número de população ser texto!");
+            }
+
+
 
             if (linhasInseridasMunicipios <= 1){
                 System.out.println( linhasInseridasMunicipios +" Linha vai ser inserida");

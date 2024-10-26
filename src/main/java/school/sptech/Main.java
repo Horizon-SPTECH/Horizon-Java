@@ -108,55 +108,93 @@ public class Main {
         //fazendo downloads de arquivos
 
 
-        String nomeArquivo = "objetos-furtados.xlsx";
-        String nomeArquivoPopulacao = "populacao-es.xlsx";
-
-        Path caminho = Path.of(nomeArquivo);
-        Path caminhoPopulacao = Path.of(nomeArquivoPopulacao);
+//        String nomeArquivo = "objetos-furtados.xlsx";
+//        String nomeArquivoPopulacao = "populacao-es.xlsx";
+//
+//        Path caminho = Path.of(nomeArquivo);
+//        Path caminhoPopulacao = Path.of(nomeArquivoPopulacao);
 
         // Verifica se os arquivos locais já existem
 
-        try {
+//        try {
+//
+//            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Listando e fazendo download dos arquivos no bucket: " + nomeBucket);
+//
+//            List<S3Object> objects = s3Client.listObjects(ListObjectsRequest.builder()
+//                    .bucket(nomeBucket)
+//                    .build()).contents();
+//
+//            for (S3Object object : objects) {
+//
+//                if (object.key().endsWith(".xlsx")) {
+//                    Path oupuPath = new File(object.key()).toPath();
+//
+//                    if(Files.exists(oupuPath)){
+//                        Files.delete(oupuPath);
+//                    }
+//
+//
+//                    GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+//                            .bucket(nomeBucket)
+//                            .key(object.key())
+//                            .build();
+//
+//                    try (InputStream inputStream = s3Client.getObject(getObjectRequest, ResponseTransformer.toInputStream())) {
+//                        Path outputPath = new File(object.key()).toPath();
+//                        Files.copy(inputStream, outputPath);
+//                        System.out.println("Arquivo baixado: " + object.key());
+//                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Arquivo baixado com sucesso: " + object.key());
+//                    } catch (IOException e) {
+//
+//                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Erro ao salvar o arquivo: " + e.getMessage());
+//                        System.err.println("Erro ao salvar o arquivo: " + e.getMessage());
+//                    }
+//                }
+//            }
+//        } catch (S3Exception e) {
+//
+//            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Erro ao fazer download dos arquivos: " + e.getMessage());
+//            System.err.println("Erro ao fazer download dos arquivos: " + e.getMessage());
+//        }
 
-            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Listando e fazendo download dos arquivos no bucket: " + nomeBucket);
 
-            List<S3Object> objects = s3Client.listObjects(ListObjectsRequest.builder()
-                    .bucket(nomeBucket)
-                    .build()).contents();
+        //Lendo arquivos direto do BUcket
 
-            for (S3Object object : objects) {
+        List<S3Object> objects = s3Client.listObjects(ListObjectsRequest.builder()
+                .bucket(nomeBucket)
+                .build()).contents();
 
-                if (object.key().endsWith(".xlsx")) {
-                    Path oupuPath = new File(object.key()).toPath();
 
-                    if(Files.exists(oupuPath)){
-                        Files.delete(oupuPath);
+        LeitorExcel leitorExcel = new LeitorExcel();
+        LeitorExcel leitorExcel1 = new LeitorExcel();
+
+        List<Dados> dadosExtraidos = null;
+        List<Populacao> populacaoList = null;
+
+        for (S3Object object : objects) {
+            if (object.key().endsWith(".xlsx")){
+                GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                        .bucket(nomeBucket)
+                        .key(object.key())
+                        .build();
+
+                try (InputStream inputStream = s3Client.getObject(getObjectRequest)){
+                    if (object.key().equals("objetos-furtados.xlsx")){
+                        dadosExtraidos = leitorExcel.extrairDados(object.key(),inputStream);
+                        System.out.println("Arquivo objetos-furtados.xlsx lido com sucesso! ");
+                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Arquivo objetos-furtados.xlsx lido com sucesso!");
+
+                    }else if (object.key().equals("populacao-es.xlsx")){
+                        populacaoList = leitorExcel1.extrairDadosPopulacao(object.key(), inputStream);
+                        System.out.println("Arquivo populacao-es.xlsx lido com sucesso! ");
+                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] populacao-es.xlsx lido com sucesso!");
                     }
-
-
-                    GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                            .bucket(nomeBucket)
-                            .key(object.key())
-                            .build();
-
-                    try (InputStream inputStream = s3Client.getObject(getObjectRequest, ResponseTransformer.toInputStream())) {
-                        Path outputPath = new File(object.key()).toPath();
-                        Files.copy(inputStream, outputPath);
-                        System.out.println("Arquivo baixado: " + object.key());
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Arquivo baixado com sucesso: " + object.key());
-                    } catch (IOException e) {
-
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Erro ao salvar o arquivo: " + e.getMessage());
-                        System.err.println("Erro ao salvar o arquivo: " + e.getMessage());
-                    }
+                } catch (IOException e){
+                    Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Erro ao ler o arquivo de excel do bucket: " + e.getMessage());
+                    System.err.println("Erro ao ler o arquivo de excel do bucket: " + e.getMessage());
                 }
             }
-        } catch (S3Exception e) {
-
-            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Erro ao fazer download dos arquivos: " + e.getMessage());
-            System.err.println("Erro ao fazer download dos arquivos: " + e.getMessage());
         }
-
 
         // deletando um 'objeto'/arquivo do bucket
 
@@ -178,14 +216,8 @@ public class Main {
 
 
 
-            InputStream arquivo = Files.newInputStream(caminho);
-            InputStream arquivoPopulacao = Files.newInputStream(caminhoPopulacao);
 
-            LeitorExcel leitorExcel = new LeitorExcel();
-            LeitorExcel leitorExcel1 = new LeitorExcel();
 
-            List<Dados> dadosEstraidos = leitorExcel.extrairDados(nomeArquivo, arquivo);
-            List<Populacao> populacaoList = leitorExcel1.extrairDadosPopulacao(nomeArquivoPopulacao, arquivoPopulacao);
 
             // Conectando ao banco de dados
 
@@ -194,27 +226,30 @@ public class Main {
             DBConnectionProvider dbConnectionProvider = new DBConnectionProvider();
             JdbcTemplate connection = dbConnectionProvider.getConnection();
 
-//            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
-//            connection.execute("CREATE DATABASE projetoHorizon");
-//            connection.execute("USE projetoHorizon");
-//
-//            connection.execute("""
-//                CREATE TABLE IF NOT EXISTS dados (
-//                    idDados INT AUTO_INCREMENT PRIMARY KEY,
-//                    dataFurto DATE NOT NULL,
-//                    horario TIME NOT NULL,
-//                    tipoObjeto VARCHAR(255) NOT NULL,
-//                    municipio VARCHAR(255) NOT NULL
-//                )
-//            """);
-//
-//            connection.execute("""
-//                CREATE TABLE IF NOT EXISTS populacao (
-//                    idMunicipio INT AUTO_INCREMENT PRIMARY KEY,
-//                    municipio VARCHAR(255) NOT NULL,
-//                    populacao INT NOT NULL
-//                )
-//            """);
+            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
+            connection.execute("CREATE DATABASE projetoHorizon");
+            connection.execute("USE projetoHorizon");
+
+        connection.execute("""
+                CREATE TABLE IF NOT EXISTS populacao (
+                    idMunicipio INT AUTO_INCREMENT PRIMARY KEY,
+                    municipio VARCHAR(255) NOT NULL,
+                    populacao INT NOT NULL
+                )
+            """);
+
+            connection.execute("""
+                CREATE TABLE IF NOT EXISTS furtos (
+                    idDados INT AUTO_INCREMENT PRIMARY KEY,
+                    dataFurto DATE NOT NULL,
+                    horario TIME NOT NULL,
+                    tipoObjeto VARCHAR(255) NOT NULL,
+                    idMunicipio INT,
+                    CONSTRAINT fkPopulacao FOREIGN KEY (idMunicipio) REFERENCES populacao(idMunicipio)
+                )
+            """);
+
+
 
 
 
@@ -230,14 +265,21 @@ public class Main {
         System.out.println("Dados de população do Espirito Santos inseridos com sucesso");
         Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dados de população do Espirito Santos inseridos com sucesso");
 
-            for (Dados dados : dadosEstraidos) {
-                connection.update("INSERT INTO dados (dataFurto, horario, tipoObjeto, municipio) VALUES (?, ?, ?, ?)",
+            for (Dados dados : dadosExtraidos) {
+
+                Integer idMunicipio = connection.queryForObject(
+                  "SELECT idMunicipio FROM populacao where municipio = ?",
+                  Integer.class,
+                  dados.getMunicipio()
+                );
+
+                connection.update("INSERT INTO furtos (dataFurto, horario, tipoObjeto,idMunicipio) VALUES (?, ?, ?, ?)",
                         dados.getData(),
                         dados.getHorario(),
                         dados.getObjeto(),
-                        dados.getMunicipio());
-//                connection.update("INSERT INTO dados (dataFurto, horario, tipoObjeto, municipio) VALUES (?, ?, ?, ?)",
-//                "2024-04-06", "00:00", "CELULAR", "VITORIA");
+                        idMunicipio);
+//                connection.update("INSERT INTO futos (dataFurto, horario, tipoObjeto, idMunicipio) VALUES (?, ?, ?, ?)",
+//                "2024-04-06", "00:00", "CELULAR", 78);
                 //System.out.println(dados);
             }
 
