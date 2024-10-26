@@ -228,7 +228,8 @@ public class Main {
 
 //            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
 //            connection.execute("CREATE DATABASE projetoHorizon");
-//            connection.execute("USE projetoHorizon");
+
+            connection.execute("USE projetoHorizon");
 //
 //        connection.execute("""
 //                CREATE TABLE IF NOT EXISTS populacao (
@@ -240,7 +241,7 @@ public class Main {
 //
 //            connection.execute("""
 //                CREATE TABLE IF NOT EXISTS furtos (
-//                    idDados INT AUTO_INCREMENT PRIMARY KEY,
+//                    idFurtos INT AUTO_INCREMENT PRIMARY KEY,
 //                    dataFurto DATE NOT NULL,
 //                    horario TIME NOT NULL,
 //                    tipoObjeto VARCHAR(255) NOT NULL,

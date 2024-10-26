@@ -250,12 +250,12 @@ public class LeitorExcel {
             Log.inserirNoLog("---------------------------------------");
 
             if (linhasNaoInseridas <=1){
-                System.out.println(linhasNaoInseridas +" Linha não foi inserida por ser do tipo roubo");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linha não foi inseridas por ser do tipo roubo ");
+                System.out.println(linhasNaoInseridas +" Linha não foi inserida na tabela de Furtos");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linha não foi inseridas na tabela de Furtos");
 
             }else {
-                System.out.println(linhasNaoInseridas +" Linhas não foram inseridas por ser do tipo roubo");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linhas não foram inseridas por ser do tipo roubo");
+                System.out.println(linhasNaoInseridas +" Linhas não foram inseridas na tabela de Furtos");
+                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter)  + "] "+ linhasNaoInseridas +" Linhas não foram inseridas na tabela de Furtos");
 
             }
 
@@ -393,13 +393,7 @@ public class LeitorExcel {
             }
             Log.inserirNoLog("---------------------------------------");
 
-            if (linhasMunicipiosNaoInseridas <= 1){
-                System.out.println( linhasMunicipiosNaoInseridas +" Linha não foi inserida");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter) + "] " + linhasMunicipiosNaoInseridas +" Linha não foi inserida na Tabela do Municipio de Espírito Santo");
-            }else {
-                System.out.println( linhasMunicipiosNaoInseridas +" Linhas não foram inseridas");
-                Log.inserirNoLog( "["+ LocalDateTime.now() .format(formatter) + "] " + linhasMunicipiosNaoInseridas +" Linhas não foram inseridas na Tabela do Municipio de Espírito Santo");
-            }
+
 
 
             if (contadorErroMunicipio > 0){
