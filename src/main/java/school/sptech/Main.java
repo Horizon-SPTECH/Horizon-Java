@@ -230,9 +230,16 @@ public class Main {
 //            connection.execute("CREATE DATABASE projetoHorizon");
 
             connection.execute("USE projetoHorizon");
-            connection.execute("TRUNCATE TABLE populacao");
             connection.execute("TRUNCATE TABLE furtos");
-//
+            connection.execute("ALTER TABLE furtos DROP FOREIGN KEY fk_furtos_populacao");
+            connection.execute("TRUNCATE TABLE populacao");
+            connection.execute("""
+                                    ALTER TABLE furtos ADD CONSTRAINT fk_furtos_populacao
+                                    FOREIGN KEY (idMunicipio)
+                                    REFERENCES populacao(idMunicipio)
+                                    """);
+
+//populacao
 //        connection.execute("""
 //                CREATE TABLE IF NOT EXISTS populacao (
 //                    idMunicipio INT AUTO_INCREMENT PRIMARY KEY,
