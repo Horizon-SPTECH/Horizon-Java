@@ -230,6 +230,8 @@ public class Main {
 //            connection.execute("CREATE DATABASE projetoHorizon");
 
             connection.execute("USE projetoHorizon");
+            connection.execute("TRUNCATE TABLE populacao");
+            connection.execute("TRUNCATE TABLE furtos");
 //
 //        connection.execute("""
 //                CREATE TABLE IF NOT EXISTS populacao (
