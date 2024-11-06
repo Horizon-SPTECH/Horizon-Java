@@ -230,13 +230,13 @@ public class Main {
 //            connection.execute("CREATE DATABASE projetoHorizon");
 
             connection.execute("USE projetoHorizon");
-            connection.execute("TRUNCATE TABLE furtos");
-            connection.execute("ALTER TABLE furtos DROP FOREIGN KEY fk_furtos_populacao");
-            connection.execute("TRUNCATE TABLE populacao");
+            connection.execute("TRUNCATE TABLE furto");
+            connection.execute("ALTER TABLE furto DROP FOREIGN KEY fk_furtos_populacao");
+            connection.execute("TRUNCATE TABLE municipio_es");
             connection.execute("""
-                                    ALTER TABLE furtos ADD CONSTRAINT fk_furtos_populacao
-                                    FOREIGN KEY (idMunicipio)
-                                    REFERENCES populacao(idMunicipio)
+                                    ALTER TABLE furto ADD CONSTRAINT fk_furtos_populacao
+                                    FOREIGN KEY (id_municipio_es)
+                                    REFERENCES municipio_es(id)
                                     """);
 
 //populacao
@@ -266,7 +266,7 @@ public class Main {
             // Inserindo os dados no banco de dados
             for (Populacao populacao : populacaoList) {
                 connection.update(
-                 "INSERT INTO populacao (municipio,populacao) VALUES(?,?)",
+                 "INSERT INTO municipio_es  (nome,habitante) VALUES(?,?)",
                         populacao.getMunicipio(),
                         populacao.getPopulacao()
                 );
@@ -278,12 +278,12 @@ public class Main {
             for (Dados dados : dadosExtraidos) {
 
                 Integer idMunicipio = connection.queryForObject(
-                  "SELECT idMunicipio FROM populacao where municipio = ?",
+                  "SELECT id FROM municipio_es where nome = ?",
                   Integer.class,
                   dados.getMunicipio()
                 );
 
-                connection.update("INSERT INTO furtos (dataFurto, horario, tipoObjeto,idMunicipio) VALUES (?, ?, ?, ?)",
+                connection.update("INSERT INTO furto (data, horario, objeto_roubado,id_municipio_es) VALUES (?, ?, ?, ?)",
                         dados.getData(),
                         dados.getHorario(),
                         dados.getObjeto(),

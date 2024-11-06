@@ -1,5 +1,0 @@
-[2024-10-28_20-06-41] Iniciando execução do programa
-
-[2024-10-28_20-06-46] Bucket já existe: bucket-horizon
-[2024-10-28_20-06-46] Bucket não encontrado, criando um novo: bucket-horizon
-[2024-10-28_20-06-46] Erro ao criar o bucket: The provided token has expired. (Service: S3, Status Code: 400, Request ID: VAQ8JN04M1BFRTHM, Extended Request ID: Urt5jsRDVKa04XFTd9Rul7xYvHy7+XdUYg/g6wWfBzBxfM9QPV09lOGM6MoeDY+NVzx5i+z1jv0=)
