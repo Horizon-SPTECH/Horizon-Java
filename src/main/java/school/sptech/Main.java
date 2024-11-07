@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
 public class Main {
 
     public static void main(String[] args) throws IOException {
@@ -33,8 +32,9 @@ public class Main {
         //Instanciando o cliente S3 via S3Provider
 
 
+        String varBucket = System.getenv("NAME_BUCKET");
         S3Client s3Client = new S3Provider().getS3Client();
-        String nomeBucket = "bucket-horizon";
+        String nomeBucket = varBucket;
 
         try {
             s3Client.headBucket(HeadBucketRequest.builder().
@@ -219,21 +219,21 @@ public class Main {
 
 
 
-            // Conectando ao banco de dados
+        // Conectando ao banco de dados
 
         Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Conexão com o banco o Bnaco de Dados");
 
-            DBConnectionProvider dbConnectionProvider = new DBConnectionProvider();
-            JdbcTemplate connection = dbConnectionProvider.getConnection();
+        DBConnectionProvider dbConnectionProvider = new DBConnectionProvider();
+        JdbcTemplate connection = dbConnectionProvider.getConnection();
 
 //            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
 //            connection.execute("CREATE DATABASE projetoHorizon");
 
-            connection.execute("USE projetoHorizon");
-            connection.execute("TRUNCATE TABLE furto");
-            connection.execute("ALTER TABLE furto DROP FOREIGN KEY fk_furtos_populacao");
-            connection.execute("TRUNCATE TABLE municipio_es");
-            connection.execute("""
+        connection.execute("USE projetoHorizon");
+        connection.execute("TRUNCATE TABLE furto");
+        connection.execute("ALTER TABLE furto DROP FOREIGN KEY fk_furtos_populacao");
+        connection.execute("TRUNCATE TABLE municipio_es");
+        connection.execute("""
                                     ALTER TABLE furto ADD CONSTRAINT fk_furtos_populacao
                                     FOREIGN KEY (id_municipio_es)
                                     REFERENCES municipio_es(id)
@@ -263,38 +263,38 @@ public class Main {
 
 
 
-            // Inserindo os dados no banco de dados
-            for (Populacao populacao : populacaoList) {
-                connection.update(
-                 "INSERT INTO municipio_es  (nome,habitante) VALUES(?,?)",
-                        populacao.getMunicipio(),
-                        populacao.getPopulacao()
-                );
-                //System.out.println(populacao);
-            }
+        // Inserindo os dados no banco de dados
+        for (Populacao populacao : populacaoList) {
+            connection.update(
+                    "INSERT INTO municipio_es  (nome,habitante) VALUES(?,?)",
+                    populacao.getMunicipio(),
+                    populacao.getPopulacao()
+            );
+            //System.out.println(populacao);
+        }
         System.out.println("Dados de população do Espirito Santos inseridos com sucesso");
         Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dados de população do Espirito Santos inseridos com sucesso");
 
-            for (Dados dados : dadosExtraidos) {
+        for (Dados dados : dadosExtraidos) {
 
-                Integer idMunicipio = connection.queryForObject(
-                  "SELECT id FROM municipio_es where nome = ?",
-                  Integer.class,
-                  dados.getMunicipio()
-                );
+            Integer idMunicipio = connection.queryForObject(
+                    "SELECT id FROM municipio_es where nome = ?",
+                    Integer.class,
+                    dados.getMunicipio()
+            );
 
-                connection.update("INSERT INTO furto (data, horario, objeto_roubado,id_municipio_es) VALUES (?, ?, ?, ?)",
-                        dados.getData(),
-                        dados.getHorario(),
-                        dados.getObjeto(),
-                        idMunicipio);
+            connection.update("INSERT INTO furto (data, horario, objeto_roubado,id_municipio_es) VALUES (?, ?, ?, ?)",
+                    dados.getData(),
+                    dados.getHorario(),
+                    dados.getObjeto(),
+                    idMunicipio);
 //                connection.update("INSERT INTO futos (dataFurto, horario, tipoObjeto, idMunicipio) VALUES (?, ?, ?, ?)",
 //                "2024-04-06", "00:00", "CELULAR", 78);
-                //System.out.println(dados);
-            }
+            //System.out.println(dados);
+        }
 
-            System.out.println("Dados sobre furtos inseridos com sucesso no banco de dados!");
-            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dados sobre furtos inseridos com sucesso no banco de dados!");
+        System.out.println("Dados sobre furtos inseridos com sucesso no banco de dados!");
+        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dados sobre furtos inseridos com sucesso no banco de dados!");
 
 
         // fazendo upload de arqivos
@@ -316,3 +316,4 @@ public class Main {
 
     }
 }
+
