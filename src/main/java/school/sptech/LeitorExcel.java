@@ -364,11 +364,11 @@ public class LeitorExcel {
                         contadorErroMunicipio++;
                     }
 
-                    if (row.getCell(3).getCellType() == CellType.NUMERIC){
-                        populacao.setPopulacao((int) row.getCell(3).getNumericCellValue());
+                    if (row.getCell(2).getCellType() == CellType.NUMERIC){
+                        populacao.setPopulacao((int) row.getCell(2).getNumericCellValue());
                     }else {
 
-                        String valorCelula = row.getCell(3).getStringCellValue();
+                        String valorCelula = row.getCell(2).getStringCellValue();
 
                         try {
                             // Remove a palavra "pessoas" e quaisquer espaços
