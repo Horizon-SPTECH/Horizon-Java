@@ -4,23 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class Dados {
-
     private Integer idDados;
-    private LocalDate data;
-    private LocalTime horario;
-    private String objeto;
-    private String municipio;
+    private String nomeMunicipio;
 
-
-    public Dados(Integer idDados, LocalDate data, LocalTime horario, String objeto, String municipio) {
+    public Dados(Integer idDados, String nomeMunicipio) {
         this.idDados = idDados;
-        this.data = data;
-        this.horario = horario;
-        this.objeto = objeto;
-        this.municipio = municipio;
+        this.nomeMunicipio = nomeMunicipio;
     }
 
-    public Dados(){}
+    public Dados() {}
 
     public Integer getIdDados() {
         return idDados;
@@ -30,46 +22,11 @@ public class Dados {
         this.idDados = idDados;
     }
 
-    public LocalDate getData() {
-        return data;
+    public String getNomeMunicipio() {
+        return nomeMunicipio;
     }
 
-    public void setData(LocalDate data) {
-        this.data = data;
-    }
-
-    public LocalTime getHorario() {
-        return horario;
-    }
-
-    public void setHorario(LocalTime horario) {
-        this.horario = horario;
-    }
-
-    public String getObjeto() {
-        return objeto;
-    }
-
-    public void setObjeto(String objeto) {
-        this.objeto = objeto;
-    }
-
-    public String getMunicipio() {
-        return municipio;
-    }
-
-    public void setMunicipio(String municipio) {
-        this.municipio = municipio;
-    }
-
-    @Override
-    public String toString() {
-        return "Dados{" +
-                "idDados=" + idDados +
-                ", data=" + data +
-                ", horario=" + horario +
-                ", objeto='" + objeto + '\'' +
-                ", municipio='" + municipio + '\'' +
-                '}';
+    public void setNomeMunicipio(String nomeMunicipio) {
+        this.nomeMunicipio = nomeMunicipio;
     }
 }

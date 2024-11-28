@@ -22,7 +22,7 @@ public class LeitorExcel {
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
-    public List<Dados> extrairDados(String nomeArquivo, InputStream arquivo){
+    public List<Furto> extrairDados(String nomeArquivo, InputStream arquivo){
 
 
 
@@ -41,7 +41,7 @@ public class LeitorExcel {
 
             Sheet sheet = workbook.getSheetAt(0);
 
-            List<Dados> dadosExtraidos = new ArrayList<>();
+            List<Furto> dadosExtraidos = new ArrayList<>();
 
             Integer idCont = 1;
 
@@ -69,7 +69,7 @@ public class LeitorExcel {
                     }
 
 
-                Dados dados = new Dados();
+                Furto furto = new Furto();
 
 
                 //validando se o tipo de crime é Furto
@@ -81,7 +81,7 @@ public class LeitorExcel {
 
                     //Validando se existe uma string na coluna de data
                     if (row.getCell(1).getCellType() == CellType.NUMERIC){
-                        dados.setData(row.getCell(1).getLocalDateTimeCellValue().toLocalDate());
+                        furto.setData(row.getCell(1).getLocalDateTimeCellValue().toLocalDate());
                     }else {
                         contadorErroData++;
                         verificarLinha = false;
@@ -89,7 +89,7 @@ public class LeitorExcel {
 
                     //Validando se existe uma string na coluna de Horarios
                     if (row.getCell(2).getCellType() == CellType.NUMERIC) {
-                        dados.setHorario(row.getCell(2).getLocalDateTimeCellValue().toLocalTime());
+                        furto.setHorario(row.getCell(2).getLocalDateTimeCellValue().toLocalTime());
                     } else {
                         contadorErroHorario++;
                         verificarLinha = false;
@@ -101,9 +101,9 @@ public class LeitorExcel {
                                 row.getCell(3).getStringCellValue().equals("APARELHOS TELEFONICOS")
                         ){
                             if (row.getCell(3).getStringCellValue().equals("APARELHOS TELEFONICOS")) {
-                                dados.setObjeto("CELULAR");
+                                furto.setObjeto("CELULAR");
                             } else {
-                                dados.setObjeto(row.getCell(3).getStringCellValue());
+                                furto.setObjeto(row.getCell(3).getStringCellValue());
                             }
                         }else {
                             verificarLinha = false;
@@ -226,15 +226,14 @@ public class LeitorExcel {
                                 break;
                         }
 
-
-                        dados.setMunicipio(textoCorrigido);
+                        furto.setNomeMunicipio(textoCorrigido);
                     }else {
                         verificarLinha = false;
                         contadorErroNomeMunicipio++;
                     }
 
                     if (verificarLinha){
-                        dadosExtraidos.add(dados);
+                        dadosExtraidos.add(furto);
                         linhasInseridas++;
                     }else {
                         linhasNaoInseridas++;
@@ -358,7 +357,7 @@ public class LeitorExcel {
 
                         String maiusculo = row.getCell(0).getStringCellValue().toUpperCase();
 
-                        populacao.setMunicipio(maiusculo);
+                        populacao.setNomeMunicipio(maiusculo);
                     }else {
                         verificarLinha = false;
                         contadorErroMunicipio++;

@@ -168,7 +168,7 @@ public class Main {
         LeitorExcel leitorExcel = new LeitorExcel();
         LeitorExcel leitorExcel1 = new LeitorExcel();
 
-        List<Dados> dadosExtraidos = null;
+        List<Furto> dadosExtraidos = null;
         List<Populacao> populacaoList = null;
 
         for (S3Object object : objects) {
@@ -267,7 +267,7 @@ public class Main {
         for (Populacao populacao : populacaoList) {
             connection.update(
                     "INSERT INTO municipio_es  (nome,habitante) VALUES(?,?)",
-                    populacao.getMunicipio(),
+                    populacao.getNomeMunicipio(),
                     populacao.getPopulacao()
             );
             //System.out.println(populacao);
@@ -275,18 +275,18 @@ public class Main {
         System.out.println("Dados de população do Espirito Santos inseridos com sucesso");
         Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dados de população do Espirito Santos inseridos com sucesso");
 
-        for (Dados dados : dadosExtraidos) {
+        for (Furto furto : dadosExtraidos) {
 
             Integer idMunicipio = connection.queryForObject(
                     "SELECT id FROM municipio_es where nome = ?",
                     Integer.class,
-                    dados.getMunicipio()
+                    furto.getNomeMunicipio()
             );
 
             connection.update("INSERT INTO furto (data, horario, objeto_roubado,id_municipio_es) VALUES (?, ?, ?, ?)",
-                    dados.getData(),
-                    dados.getHorario(),
-                    dados.getObjeto(),
+                    furto.getData(),
+                    furto.getHorario(),
+                    furto.getObjeto(),
                     idMunicipio);
 //                connection.update("INSERT INTO futos (dataFurto, horario, tipoObjeto, idMunicipio) VALUES (?, ?, ?, ?)",
 //                "2024-04-06", "00:00", "CELULAR", 78);
