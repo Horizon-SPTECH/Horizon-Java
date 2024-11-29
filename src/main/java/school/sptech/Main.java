@@ -1,5 +1,6 @@
 package school.sptech;
 
+import org.json.JSONObject;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import school.sptech.client.S3Provider;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
@@ -182,16 +183,47 @@ public class Main {
                     if (object.key().equals("objetos-furtados.xlsx")){
                         dadosExtraidos = leitorExcel.extrairDados(object.key(),inputStream);
                         System.out.println("Arquivo objetos-furtados.xlsx lido com sucesso! ");
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Arquivo objetos-furtados.xlsx lido com sucesso!");
+                        String mensagem1 = "Arquivo objetos-furtados.xlsx lido com sucesso!" ;
+                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] " + mensagem1);
 
+                        JSONObject jsonLeituraArquivos = new JSONObject();
+
+
+                        jsonLeituraArquivos.put("text", String.format("""
+                %s 
+                """, mensagem1));
+
+                        Slack.sendMessage(jsonLeituraArquivos);
                     }else if (object.key().equals("populacao-es.xlsx")){
                         populacaoList = leitorExcel1.extrairDadosPopulacao(object.key(), inputStream);
                         System.out.println("Arquivo populacao-es.xlsx lido com sucesso! ");
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] populacao-es.xlsx lido com sucesso!");
+                        String mensagem2 = "Arquivo populacao-es.xlsx lido com sucesso! ";
+                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] " + mensagem2);
+
+                        JSONObject jsonLeituraArquivos = new JSONObject();
+
+
+                        jsonLeituraArquivos.put("text", String.format("""
+                %s 
+                """, mensagem2));
+
+                        Slack.sendMessage(jsonLeituraArquivos);
                     }
+
+
                 } catch (IOException e){
-                    Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Erro ao ler o arquivo de excel do bucket: " + e.getMessage());
+                    String mensagem3 = "Erro ao ler o arquivo de excel do bucket: ";
+                    Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "]"+ mensagem3 + e.getMessage());
                     System.err.println("Erro ao ler o arquivo de excel do bucket: " + e.getMessage());
+
+                    JSONObject jsonErro = new JSONObject();
+
+
+                    jsonErro.put("text", String.format("""
+                %s 
+                """, mensagem3));
+
+                    Slack.sendMessage(jsonErro);
                 }
             }
         }
@@ -272,8 +304,9 @@ public class Main {
             );
             //System.out.println(populacao);
         }
+        String mensagem4 = "Dados de população do Espirito Santos inseridos com sucesso";
         System.out.println("Dados de população do Espirito Santos inseridos com sucesso");
-        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dados de população do Espirito Santos inseridos com sucesso");
+        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] " + mensagem4);
 
         for (Furto furto : dadosExtraidos) {
 
@@ -293,8 +326,19 @@ public class Main {
             //System.out.println(dados);
         }
 
+        String mensagem5 = "Dados sobre furtos inseridos com sucesso no banco de dados!";
         System.out.println("Dados sobre furtos inseridos com sucesso no banco de dados!");
-        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Dados sobre furtos inseridos com sucesso no banco de dados!");
+        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] "+ mensagem5);
+
+        JSONObject jsonInsercaoDados = new JSONObject();
+
+
+        jsonInsercaoDados.put("text", String.format("""
+                %s 
+                %s
+                """, mensagem4,mensagem5));
+
+        Slack.sendMessage(jsonInsercaoDados);
 
 
         // fazendo upload de arqivos
@@ -309,9 +353,30 @@ public class Main {
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
-            System.out.println("Arquivo '" + file.getName() + "' enviado com sucesso");
+            String mensagem6 = String.format("Arquivo '" + file.getName() + "' enviado com sucesso");
+            System.out.println(mensagem6);
+
+            JSONObject json = new JSONObject();
+
+
+            json.put("text", String.format("""
+                Para mais informações acesse seu log: %s
+                %s 
+                """, file.getName(),mensagem6));
+
+            Slack.sendMessage(json);
         } catch (Exception e) {
-            System.err.println("Erro ao fazer upload do arquivo: " + e.getMessage());
+            String mensagem6 = String.format("Erro ao fazer upload do arquivo: " + e.getMessage());
+            System.err.println(mensagem6);
+
+            JSONObject json = new JSONObject();
+
+
+            json.put("text", String.format("""
+                %s 
+                """, mensagem6));
+
+            Slack.sendMessage(json);
         }
 
     }
