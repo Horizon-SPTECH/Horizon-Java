@@ -1,0 +1,17 @@
+[2024-11-28_23-49-06] Iniciando execução do programa
+
+[2024-11-28_23-49-10] Bucket já existe: bucket-horizon
+---------------------------------------
+[2024-11-28_23-49-18] 9278 Linhas não foram inseridas na tabela de Furtos
+[2024-11-28_23-49-18] 1184 Linhas não foram inseridas por Horário indeterminada!
+[2024-11-28_23-49-18] 7842 Linha(s) vão ser inseridas na Tabela de Furtos
+---------------------------------------
+[2024-11-28_23-49-18] Arquivo objetos-furtados.xlsx lido com sucesso!
+---------------------------------------
+[2024-11-28_23-49-20] 1 Linhas não foram inseridas por Município ser indeterminada!
+[2024-11-28_23-49-20] 1 Linhas não foram inseridas por Número de população ser texto!
+[2024-11-28_23-49-20] 78 Linhas vão ser inseridas na Tabela do Municipio de Espírito Santo
+---------------------------------------
+[2024-11-28_23-49-20] Arquivo populacao-es.xlsx lido com sucesso! 
+[2024-11-28_23-49-20] Conexão com o banco o Bnaco de Dados
+[2024-11-28_23-49-50] Dados de população do Espirito Santos inseridos com sucesso
