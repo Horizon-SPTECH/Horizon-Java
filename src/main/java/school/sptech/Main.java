@@ -172,6 +172,8 @@ public class Main {
         List<Furto> dadosExtraidos = null;
         List<Populacao> populacaoList = null;
 
+        Set <String> mensagensEnviadas = new HashSet<>();
+
         for (S3Object object : objects) {
             if (object.key().endsWith(".xlsx")){
                 GetObjectRequest getObjectRequest = GetObjectRequest.builder()
@@ -182,48 +184,53 @@ public class Main {
                 try (InputStream inputStream = s3Client.getObject(getObjectRequest)){
                     if (object.key().equals("objetos-furtados.xlsx")){
                         dadosExtraidos = leitorExcel.extrairDados(object.key(),inputStream);
-                        System.out.println("Arquivo objetos-furtados.xlsx lido com sucesso! ");
                         String mensagem1 = "Arquivo objetos-furtados.xlsx lido com sucesso!" ;
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] " + mensagem1);
+                        if (mensagensEnviadas.add(mensagem1)){
+                            System.out.println(mensagem1);
+                            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] " + mensagem1);
+                            JSONObject jsonLeituraArquivos = new JSONObject();
 
-                        JSONObject jsonLeituraArquivos = new JSONObject();
+                            jsonLeituraArquivos.put("text", String.format("""
+                            %s 
+                            """, mensagem1));
 
-
-                        jsonLeituraArquivos.put("text", String.format("""
-                %s 
-                """, mensagem1));
-
-                        Slack.sendMessage(jsonLeituraArquivos);
+                            Slack.sendMessage(jsonLeituraArquivos);
+                        }
                     }else if (object.key().equals("populacao-es.xlsx")){
                         populacaoList = leitorExcel1.extrairDadosPopulacao(object.key(), inputStream);
-                        System.out.println("Arquivo populacao-es.xlsx lido com sucesso! ");
                         String mensagem2 = "Arquivo populacao-es.xlsx lido com sucesso! ";
-                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] " + mensagem2);
 
-                        JSONObject jsonLeituraArquivos = new JSONObject();
+                        if (mensagensEnviadas.add(mensagem2)){
+                            System.out.println(mensagem2);
+                            Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] " + mensagem2);
+
+                            JSONObject jsonLeituraArquivos = new JSONObject();
 
 
-                        jsonLeituraArquivos.put("text", String.format("""
+                            jsonLeituraArquivos.put("text", String.format("""
                 %s 
                 """, mensagem2));
 
-                        Slack.sendMessage(jsonLeituraArquivos);
+                            Slack.sendMessage(jsonLeituraArquivos);
+
+                        }
                     }
-
-
                 } catch (IOException e){
-                    String mensagem3 = "Erro ao ler o arquivo de excel do bucket: ";
-                    Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "]"+ mensagem3 + e.getMessage());
-                    System.err.println("Erro ao ler o arquivo de excel do bucket: " + e.getMessage());
+                    String mensagem3 = "Erro ao ler o arquivo de excel do bucket: " + e.getMessage();
 
-                    JSONObject jsonErro = new JSONObject();
+                    if (mensagensEnviadas.add(mensagem3)){
+                        Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "]"+ mensagem3 + e.getMessage());
+                        System.err.println(mensagem3);
+
+                        JSONObject jsonErro = new JSONObject();
 
 
-                    jsonErro.put("text", String.format("""
+                        jsonErro.put("text", String.format("""
                 %s 
                 """, mensagem3));
 
-                    Slack.sendMessage(jsonErro);
+                        Slack.sendMessage(jsonErro);
+                    }
                 }
             }
         }
