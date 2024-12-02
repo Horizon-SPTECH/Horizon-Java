@@ -17,9 +17,9 @@ public class DBConnectionProvider {
         String dbPassword = System.getenv("SENHA");
 
         basicDataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        basicDataSource.setUrl(dbUrl);
-        basicDataSource.setUsername(dbUser);
-        basicDataSource.setPassword(dbPassword);
+        basicDataSource.setUrl("jdbc:mysql://localhost:3306/projetoHorizon");
+        basicDataSource.setUsername("Horizon");
+        basicDataSource.setPassword("horizon123");
 
         this.dataSource = basicDataSource;
     }
