@@ -1,30 +1,25 @@
 package school.sptech;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.util.List;
+import java.util.Map;
 import org.json.JSONObject;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import school.sptech.client.S3Provider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
-import javax.swing.plaf.synth.Region;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class Main {
-
     public static void main(String[] args) throws IOException, InterruptedException {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
@@ -68,23 +63,6 @@ public class Main {
                 System.err.println("Erro ao verrificar o bucket: " + e.getMessage());
             }
         }
-
-
-
-        //listar os bucket da minha instancias
-
-//        try{
-//
-//            List<Bucket> buckets = s3Client.listBuckets().buckets();
-//            System.out.println("Lista de buckets");
-//            for (Bucket bucket : buckets) {
-//                System.out.println(bucket.name());
-//            }
-//
-//        }catch (S3Exception e){
-//            System.out.println("Erro ao listar buckets: " + e.getMessage());
-//        }
-//
 
         //listando os "objetos"/arquvos do bucket
 
@@ -251,22 +229,14 @@ public class Main {
 //            System.err.println("Erro ao deletar objeto: " + e.getMessage());
 //        }
 
-
-
-
-
-
-
-
         // Conectando ao banco de dados
 
         Log.inserirNoLog("["+ LocalDateTime.now() .format(formatter)+ "] Conexão com o banco o Bnaco de Dados");
 
+
+
         DBConnectionProvider dbConnectionProvider = new DBConnectionProvider();
         JdbcTemplate connection = dbConnectionProvider.getConnection();
-
-//            connection.execute("DROP DATABASE IF EXISTS projetoHorizon");
-//            connection.execute("CREATE DATABASE projetoHorizon");
 
         connection.execute("USE projetoHorizon");
         connection.execute("TRUNCATE TABLE furto");
@@ -386,6 +356,421 @@ public class Main {
             Slack.sendMessage(json);
         }
 
+
+        int numeroSorteado = (int) (Math.random() * 8) + 1;
+
+        switch (numeroSorteado) {
+            case 1, 2, 3, 4, 5, 6, 7, 8:
+                executarSelect(connection, numeroSorteado);
+                break;
+            default:
+                System.out.println("Número inválido (não deveria acontecer)");
+        }
+    }
+
+    private static void executarSelect(JdbcTemplate connection, int id) {
+        String sqlGetPergunta = "SELECT pergunta FROM prompt WHERE id = ?";
+
+        try {
+            List<Map<String, Object>> perguntas = connection.queryForList(sqlGetPergunta, id);
+
+            if (perguntas.isEmpty()) {
+                System.out.println("Nenhuma pergunta encontrada para id: " + id);
+                return;
+            }
+
+            String perguntaOriginal = perguntas.get(0).get("pergunta").toString();
+
+            String perguntaComSubstituicao;
+            switch (id) {
+                case 1 -> perguntaComSubstituicao = substituirParaLinha1(connection, perguntaOriginal);
+                case 2 -> perguntaComSubstituicao = substituirParaLinha2(connection, perguntaOriginal);
+                case 3 -> perguntaComSubstituicao = substituirParaLinha3(connection, perguntaOriginal);
+                case 4 -> perguntaComSubstituicao = substituirParaLinha4(connection, perguntaOriginal);
+                case 5 -> perguntaComSubstituicao = substituirParaLinha5(connection, perguntaOriginal);
+                case 6 -> perguntaComSubstituicao = substituirParaLinha6(connection, perguntaOriginal);
+                case 7 -> perguntaComSubstituicao = "Estratégia baseada no mapeamento regional."; // Caso 7 sem REPLACE
+                case 8 -> perguntaComSubstituicao = substituirParaLinha8(connection, perguntaOriginal);
+                default -> perguntaComSubstituicao = "Número inválido.";
+            }
+
+            System.out.println("Pergunta com substituições: " + perguntaComSubstituicao);
+
+            String resposta = GeminiClient.getCompletion(perguntaComSubstituicao);
+
+            connection.update(
+                    "INSERT INTO recomendacao (data_hora, mensagem, id_prompt) VALUES (NOW(), ?, ?)",
+                    resposta,
+                    id
+            );
+
+            System.out.println(resposta);
+
+            JSONObject json = new JSONObject();
+
+
+            json.put("text", String.format("""
+                Resposta gerada pela IA:
+                %s 
+                Para mais recomendações acesse o nosso site
+                """, resposta));
+            Slack.sendMessage(json);
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Métodos de substituição por linha
+
+    private static String substituirParaLinha1(JdbcTemplate connection, String perguntaOriginal) {
+        String municipio = executarSelectSimples(connection, "SELECT \n" +
+                "    m.nome AS municipio\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    m.id\n" +
+                "ORDER BY \n" +
+                "    COUNT(f.id) DESC\n" +
+                "LIMIT 1;");
+        String ocorrencias = executarSelectSimples(connection, "SELECT \n" +
+                "    COUNT(f.id) AS total_furtos\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    m.id\n" +
+                "ORDER BY \n" +
+                "    total_furtos DESC\n" +
+                "LIMIT 1");
+        String objeto = executarSelectSimples(connection, "SELECT \n" +
+                "    f.objeto_roubado\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    f.objeto_roubado\n" +
+                "ORDER BY \n" +
+                "    COUNT(f.id) DESC\n" +
+                "LIMIT 1;\n");
+        String porcentagem = executarSelectSimples(connection, "SELECT\n" +
+                "    ROUND((COUNT(f.id) * 100.0 / (\n" +
+                "        SELECT COUNT(f2.id)\n" +
+                "        FROM furto f2\n" +
+                "        JOIN municipio_es m2 ON f2.id_municipio_es = m2.id\n" +
+                "        WHERE\n" +
+                "            MONTH(f2.data) = 7 AND YEAR(f2.data) = YEAR(CURDATE())\n" +
+                "            AND f2.objeto_roubado IN ('CELULAR', 'BICICLETA', 'VEICULO')\n" +
+                "            AND m2.id = (\n" +
+                "                SELECT m.id\n" +
+                "                FROM municipio_es m\n" +
+                "                JOIN furto f3 ON m.id = f3.id_municipio_es\n" +
+                "                WHERE MONTH(f3.data) = 7 AND YEAR(f3.data) = YEAR(CURDATE())\n" +
+                "                GROUP BY m.id\n" +
+                "                ORDER BY COUNT(f3.id) DESC\n" +
+                "                LIMIT 1\n" +
+                "            )\n" +
+                "    )), 2) AS percentual\n" +
+                "FROM\n" +
+                "    furto f\n" +
+                "JOIN municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE\n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "    AND f.objeto_roubado = 'CELULAR'  -- Aqui filtra apenas os furtos de celular\n" +
+                "    AND m.id = (\n" +
+                "        SELECT m.id\n" +
+                "        FROM municipio_es m\n" +
+                "        JOIN furto f3 ON m.id = f3.id_municipio_es\n" +
+                "        WHERE MONTH(f3.data) = 7 AND YEAR(f3.data) = YEAR(CURDATE())\n" +
+                "        GROUP BY m.id\n" +
+                "        ORDER BY COUNT(f3.id) DESC\n" +
+                "        LIMIT 1\n" +
+                "    );\n");
+
+        return perguntaOriginal
+                .replace("K", municipio)
+                .replace("Y", ocorrencias)
+                .replace("W", objeto)
+                .replace("Z", porcentagem);
+    }
+
+    private static String substituirParaLinha2(JdbcTemplate connection, String perguntaOriginal) {
+        String municipio = executarSelectSimples(connection, "SELECT \n" +
+                "    m.nome AS municipio\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    m.id\n" +
+                "ORDER BY \n" +
+                "    (COUNT(f.id) * 100.0 / m.habitante) DESC\n" +
+                "LIMIT 1;\n");
+        String proporcao = executarSelectSimples(connection, "SELECT \n" +
+                "    ROUND((COUNT(f.id) * 100.0 / m.habitante), 2) AS proporcao_furtos\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    m.id\n" +
+                "ORDER BY \n" +
+                "    proporcao_furtos DESC\n" +
+                "LIMIT 1;\n");
+
+        return perguntaOriginal
+                .replace("K", municipio)
+                .replace("Y", proporcao);
+    }
+
+    private static String substituirParaLinha3(JdbcTemplate connection, String perguntaOriginal) {
+        String objeto = executarSelectSimples(connection, "SELECT \n" +
+                "    f.objeto_roubado\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    f.objeto_roubado\n" +
+                "ORDER BY \n" +
+                "    COUNT(f.id) DESC\n" +
+                "LIMIT 1;\n");
+        String ocorrencias = executarSelectSimples(connection, "SELECT \n" +
+                "    COUNT(f.id) AS total_furtos\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    f.objeto_roubado\n" +
+                "ORDER BY \n" +
+                "    total_furtos DESC\n" +
+                "LIMIT 1;\n");
+
+        return perguntaOriginal
+                .replace("K", objeto)
+                .replace("Y", ocorrencias);
+    }
+
+    private static String substituirParaLinha4(JdbcTemplate connection, String perguntaOriginal) {
+        String municipio = executarSelectSimples(connection, "SELECT \n" +
+                "    m.nome AS municipio\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "GROUP BY \n" +
+                "    m.nome\n" +
+                "ORDER BY \n" +
+                "    COUNT(f.id) DESC\n" +
+                "LIMIT 1;");
+        String objeto = executarSelectSimples(connection, "SELECT \n" +
+                "    f.objeto_roubado\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "    AND m.id = (\n" +
+                "        SELECT \n" +
+                "            m2.id\n" +
+                "        FROM \n" +
+                "            furto f2\n" +
+                "        JOIN \n" +
+                "            municipio_es m2 ON f2.id_municipio_es = m2.id\n" +
+                "        WHERE \n" +
+                "            MONTH(f2.data) = 7 AND YEAR(f2.data) = YEAR(CURDATE())\n" +
+                "        GROUP BY \n" +
+                "            m2.id\n" +
+                "        ORDER BY \n" +
+                "            COUNT(f2.id) DESC\n" +
+                "        LIMIT 1\n" +
+                "    )\n" +
+                "GROUP BY \n" +
+                "    f.objeto_roubado\n" +
+                "ORDER BY \n" +
+                "    COUNT(f.id) DESC\n" +
+                "LIMIT 1;");
+        String porcentagem = executarSelectSimples(connection, "SELECT \n" +
+                "    ROUND((COUNT(f.id) * 100.0 / (\n" +
+                "        SELECT COUNT(f2.id)\n" +
+                "        FROM furto f2\n" +
+                "        JOIN municipio_es m2 ON f2.id_municipio_es = m2.id\n" +
+                "        WHERE \n" +
+                "            MONTH(f2.data) = 7 AND YEAR(f2.data) = YEAR(CURDATE())\n" +
+                "            AND m2.id = (\n" +
+                "                SELECT \n" +
+                "                    m3.id\n" +
+                "                FROM \n" +
+                "                    furto f3\n" +
+                "                JOIN \n" +
+                "                    municipio_es m3 ON f3.id_municipio_es = m3.id\n" +
+                "                WHERE \n" +
+                "                    MONTH(f3.data) = 7 AND YEAR(f3.data) = YEAR(CURDATE())\n" +
+                "                GROUP BY \n" +
+                "                    m3.id\n" +
+                "                ORDER BY \n" +
+                "                    COUNT(f3.id) DESC\n" +
+                "                LIMIT 1\n" +
+                "            )\n" +
+                "    )), 2) AS percentual\n" +
+                "FROM \n" +
+                "    furto f\n" +
+                "JOIN \n" +
+                "    municipio_es m ON f.id_municipio_es = m.id\n" +
+                "WHERE \n" +
+                "    MONTH(f.data) = 7 AND YEAR(f.data) = YEAR(CURDATE())\n" +
+                "    AND m.id = (\n" +
+                "        SELECT \n" +
+                "            m2.id\n" +
+                "        FROM \n" +
+                "            furto f2\n" +
+                "        JOIN \n" +
+                "            municipio_es m2 ON f2.id_municipio_es = m2.id\n" +
+                "        WHERE \n" +
+                "            MONTH(f2.data) = 7 AND YEAR(f2.data) = YEAR(CURDATE())\n" +
+                "        GROUP BY \n" +
+                "            m2.id\n" +
+                "        ORDER BY \n" +
+                "            COUNT(f2.id) DESC\n" +
+                "        LIMIT 1\n" +
+                "    )\n" +
+                "    AND f.objeto_roubado = (\n" +
+                "        SELECT \n" +
+                "            f4.objeto_roubado\n" +
+                "        FROM \n" +
+                "            furto f4\n" +
+                "        JOIN \n" +
+                "            municipio_es m4 ON f4.id_municipio_es = m4.id\n" +
+                "        WHERE \n" +
+                "            MONTH(f4.data) = 7 AND YEAR(f4.data) = YEAR(CURDATE())\n" +
+                "            AND m4.id = (\n" +
+                "                SELECT \n" +
+                "                    m5.id\n" +
+                "                FROM \n" +
+                "                    furto f5\n" +
+                "                JOIN \n" +
+                "                    municipio_es m5 ON f5.id_municipio_es = m5.id\n" +
+                "                WHERE \n" +
+                "                    MONTH(f5.data) = 7 AND YEAR(f5.data) = YEAR(CURDATE())\n" +
+                "                GROUP BY \n" +
+                "                    m5.id\n" +
+                "                ORDER BY \n" +
+                "                    COUNT(f5.id) DESC\n" +
+                "                LIMIT 1\n" +
+                "            )\n" +
+                "        GROUP BY \n" +
+                "            f4.objeto_roubado\n" +
+                "        ORDER BY \n" +
+                "            COUNT(f4.id) DESC\n" +
+                "        LIMIT 1\n" +
+                "    )\n" +
+                "GROUP BY \n" +
+                "    f.objeto_roubado;");
+
+        return perguntaOriginal
+                .replace("K", municipio)
+                .replace("W", objeto)
+                .replace("Y", porcentagem);
+    }
+
+    private static String substituirParaLinha5(JdbcTemplate connection, String perguntaOriginal) {
+        String mes = executarSelectSimples(connection, "   SELECT \n" +
+                "    CASE mes\n" +
+                "        WHEN 1 THEN 'Janeiro'\n" +
+                "        WHEN 2 THEN 'Fevereiro'\n" +
+                "        WHEN 3 THEN 'Março'\n" +
+                "        WHEN 4 THEN 'Abril'\n" +
+                "        WHEN 5 THEN 'Maio'\n" +
+                "        WHEN 6 THEN 'Junho'\n" +
+                "        WHEN 7 THEN 'Julho'\n" +
+                "        WHEN 8 THEN 'Agosto'\n" +
+                "        WHEN 9 THEN 'Setembro'\n" +
+                "        WHEN 10 THEN 'Outubro'\n" +
+                "        WHEN 11 THEN 'Novembro'\n" +
+                "        WHEN 12 THEN 'Dezembro'\n" +
+                "    END AS mes\n" +
+                "FROM (\n" +
+                "    SELECT MONTH(data) AS mes\n" +
+                "    FROM furto\n" +
+                "    GROUP BY MONTH(data)\n" +
+                "    ORDER BY COUNT(*) DESC\n" +
+                "    LIMIT 1\n" +
+                ") AS subquery;\n");
+
+        return perguntaOriginal.replace("K", mes);
+    }
+
+    private static String substituirParaLinha6(JdbcTemplate connection, String perguntaOriginal) {
+        String taxa = executarSelectSimples(connection, "SELECT\n" +
+                "                    ROUND((COUNT(id)/46.184),0) AS furtos_por_km2\n" +
+                "                    FROM furto;");
+
+        return perguntaOriginal.replace("K", taxa);
+    }
+
+    private static String substituirParaLinha8(JdbcTemplate connection, String perguntaOriginal) {
+        String dia = executarSelectSimples(connection, "SELECT \n" +
+                "    CASE DAYOFWEEK(data)\n" +
+                "        WHEN 1 THEN 'Domingo'\n" +
+                "        WHEN 2 THEN 'Segunda-feira'\n" +
+                "        WHEN 3 THEN 'Terça-feira'\n" +
+                "        WHEN 4 THEN 'Quarta-feira'\n" +
+                "        WHEN 5 THEN 'Quinta-feira'\n" +
+                "        WHEN 6 THEN 'Sexta-feira'\n" +
+                "        WHEN 7 THEN 'Sábado'\n" +
+                "    END AS dia_da_semana\n" +
+                "FROM \n" +
+                "    furto\n" +
+                "GROUP BY \n" +
+                "    dia_da_semana\n" +
+                "ORDER BY \n" +
+                "    COUNT(*) DESC\n" +
+                "LIMIT 1;");
+        String ocorrencias = executarSelectSimples(connection, "SELECT COUNT(*) AS total_furtos\n" +
+                "FROM furto\n" +
+                "WHERE MONTH(data) = (\n" +
+                "    SELECT MONTH(data)\n" +
+                "    FROM furto\n" +
+                "    GROUP BY MONTH(data)\n" +
+                "    ORDER BY COUNT(*) DESC\n" +
+                "    LIMIT 1\n" +
+                ");");
+
+        return perguntaOriginal
+                .replace("K", dia)
+                .replace("Y", ocorrencias);
+    }
+
+    // Método auxiliar para executar SELECTs simples
+    private static String executarSelectSimples(JdbcTemplate connection, String sql) {
+        try {
+            Map<String, Object> resultado = connection.queryForMap(sql);
+            return resultado.values().iterator().next().toString();
+        } catch (Exception e) {
+            System.out.println("Erro ao executar consulta: " + sql);
+            return "N/A";
+        }
     }
 }
 
